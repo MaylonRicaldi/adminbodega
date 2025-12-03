@@ -3,10 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'productos_screen.dart';
 import 'login_screen.dart';
 import 'agregar_producto_screen.dart';
+import 'usuarios_screen.dart';
+import 'pedidos_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final String adminNombre;
-  
+
   const DashboardScreen({super.key, required this.adminNombre});
 
   @override
@@ -26,46 +28,19 @@ class DashboardScreen extends StatelessWidget {
         ),
         child: CustomScrollView(
           slivers: [
-            // AppBar expandible
             SliverAppBar(
-              expandedHeight: 200,
+              expandedHeight: 0,
               floating: false,
               pinned: true,
               backgroundColor: Colors.teal.shade600,
-              flexibleSpace: FlexibleSpaceBar(
-                title: const Text(
-                  'Admin Dashboard',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    shadows: [Shadow(blurRadius: 2, color: Colors.black26)],
-                  ),
-                ),
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.teal.shade400,
-                        Colors.teal.shade600,
-                        Colors.cyan.shade700,
-                      ],
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      // Patrón decorativo
-                      Positioned(
-                        right: -50,
-                        top: -50,
-                        child: Icon(
-                          Icons.store,
-                          size: 200,
-                          color: Colors.white.withOpacity(0.1),
-                        ),
-                      ),
-                    ],
-                  ),
+              centerTitle: true,
+              title: const Text(
+                'Admin Dashboard',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  shadows: [Shadow(blurRadius: 2, color: Colors.black26)],
                 ),
               ),
               actions: [
@@ -78,8 +53,6 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-            
-            // Contenido principal
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -104,7 +77,6 @@ class DashboardScreen extends StatelessWidget {
                         ),
                         child: Column(
                           children: [
-                            // Icono decorativo
                             Container(
                               padding: const EdgeInsets.all(20),
                               decoration: BoxDecoration(
@@ -137,10 +109,7 @@ class DashboardScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                               decoration: BoxDecoration(
                                 color: Colors.teal.shade50,
                                 borderRadius: BorderRadius.circular(25),
@@ -169,12 +138,8 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 30),
-                    
-                    // Título de secciones
-                    Align(
-                      alignment: Alignment.centerLeft,
+                    Center(
                       child: Text(
                         'Módulos de Gestión',
                         style: TextStyle(
@@ -184,48 +149,73 @@ class DashboardScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: 16),
-                    
-                    // Grid de tarjetas de módulos
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildModuleCard(
-                            context,
-                            icon: Icons.inventory_2_rounded,
-                            title: 'Productos',
-                            subtitle: 'Gestionar inventario',
-                            color: Colors.blue,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const ProductosScreen(),
-                                ),
-                              );
-                            },
-                          ),
+                    Center(
+                      child: Container(
+                        width: 360,
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.1,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            _buildModuleCard(
+                              context,
+                              icon: Icons.inventory_2_rounded,
+                              title: 'Productos',
+                              subtitle: 'Gestionar inventario',
+                              color: Colors.blue,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const ProductosScreen()),
+                                );
+                              },
+                            ),
+                            _buildModuleCard(
+                              context,
+                              icon: Icons.add_box_rounded,
+                              title: 'Agregar Producto',
+                              subtitle: 'Nuevo producto',
+                              color: Colors.green,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const AgregarProductoScreen()),
+                                );
+                              },
+                            ),
+                            _buildModuleCard(
+                              context,
+                              icon: Icons.people_rounded,
+                              title: 'Usuarios',
+                              subtitle: 'Gestionar usuarios',
+                              color: Colors.orange,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const UsuariosScreen()),
+                                );
+                              },
+                            ),
+                            _buildModuleCard(
+                              context,
+                              icon: Icons.receipt_long_rounded,
+                              title: 'Pedidos',
+                              subtitle: 'Ver pedidos',
+                              color: Colors.purple,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const PedidosScreen()),
+                                );
+                              },
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildModuleCard(
-                            context,
-                            icon: Icons.add_box_rounded,
-                            title: 'Agregar Producto',
-                            subtitle: 'Nuevo producto',
-                            color: Colors.green,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const AgregarProductoScreen(),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -248,14 +238,12 @@ class DashboardScreen extends StatelessWidget {
   }) {
     return Card(
       elevation: 3,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             gradient: LinearGradient(
@@ -271,22 +259,22 @@ class DashboardScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: color.withOpacity(0.15),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   icon,
-                  size: 40,
+                  size: 36,
                   color: color,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 title,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey.shade800,
                 ),
@@ -411,9 +399,29 @@ class DashboardScreen extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const AgregarProductoScreen(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const AgregarProductoScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.people_rounded, color: Colors.orange.shade600),
+              title: const Text('Usuarios'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const UsuariosScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.receipt_long_rounded, color: Colors.purple.shade600),
+              title: const Text('Pedidos'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PedidosScreen()),
                 );
               },
             ),

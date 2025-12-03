@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'producto_detalle_screen.dart';
 class ProductosScreen extends StatefulWidget {
   const ProductosScreen({super.key});
 
@@ -23,6 +23,12 @@ class _ProductosScreenState extends State<ProductosScreen> {
             quitarAcentos(_searchController.text.trim().toLowerCase());
       });
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   String quitarAcentos(String texto) {
@@ -230,7 +236,6 @@ class _ProductosScreenState extends State<ProductosScreen> {
                         ),
                       );
                     }).toList(),
-                    // Switch solo dentro del editor
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -259,7 +264,6 @@ class _ProductosScreenState extends State<ProductosScreen> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Botones
                     Row(
                       children: [
                         Expanded(
@@ -322,7 +326,7 @@ class _ProductosScreenState extends State<ProductosScreen> {
                                 "Stock": int.tryParse(stockC.text) ?? data["Stock"],
                                 "Cantidad": cantidadC.text.trim(),
                               };
-                              if (cambios["Stock"] <= 0) {
+                              if ((cambios["Stock"] as int) <= 0) {
                                 cambios["Stock"] = 0;
                                 cambios["Disponibilidad"] = false;
                               }
@@ -390,121 +394,100 @@ class _ProductosScreenState extends State<ProductosScreen> {
 
                 if (docs.isEmpty) return const Center(child: Text("No se encontraron productos"));
 
-                return GridView.builder(
-                  padding: const EdgeInsets.all(12),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    childAspectRatio: 1.25,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemCount: docs.length,
-                  itemBuilder: (context, index) {
-                    final doc = docs[index];
-                    final data = doc.data() as Map<String, dynamic>;
-                    final docId = doc.id;
-                    final nombre = data['Nombre'] ?? '';
-                    final precio = double.tryParse(data['Precio'].toString()) ?? 0.0;
-                    final stock = data['Stock'] ?? 0;
-                    final cantidad = (data['Cantidad'] ?? '').toString();
-                    final marca = (data['Marca'] ?? '').toString();
+                return LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = (constraints.maxWidth ~/ 220).clamp(1, 6);
+                    return GridView.builder(
+                      padding: const EdgeInsets.all(12),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
+                        childAspectRatio: 0.8, // un poquito más alto para imagen + nombre + botones
+                      ),
+                      itemCount: docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = docs[index];
+                        final docId = doc.id;
+                        final data = doc.data() as Map<String, dynamic>;
+                        final nombre = data["Nombre"] ?? "Sin nombre";
+                        final imagenUrl = (data["imagen"] ?? "").toString();
 
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: const Offset(0, 2))],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                            ),
-                            child: Icon(Icons.shopping_bag, size: 35, color: turquesa),
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          nombre, 
-                                          maxLines: 2, 
-                                          overflow: TextOverflow.ellipsis, 
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Imagen
+                              Expanded(
+                                flex: 6,
+                                child: ClipRRect(
+                                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                                  child: imagenUrl.isEmpty
+                                      ? Container(
+                                          color: Colors.grey[200],
+                                          child: Icon(Icons.photo, size: 40, color: Colors.grey[500]),
+                                        )
+                                      : Image.network(
+                                          imagenUrl,
+                                          fit: BoxFit.cover,
                                         ),
-                                      ),
-                                      InkWell(
-                                        onTap: () => mostrarEditor(docId, data),
-                                        child: Icon(Icons.edit, color: turquesa, size: 18),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  if (marca.isNotEmpty || cantidad.isNotEmpty)
-                                    Row(
-                                      children: [
-                                        if (marca.isNotEmpty)
-                                          Flexible(
-                                            child: Text(
-                                              marca,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.grey[600],
-                                                fontWeight: FontWeight.w500,
-                                              ),
-                                            ),
-                                          ),
-                                        if (marca.isNotEmpty && cantidad.isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                                            child: Text(
-                                              "•",
-                                              style: TextStyle(color: Colors.grey[400], fontSize: 10),
-                                            ),
-                                          ),
-                                        if (cantidad.isNotEmpty)
-                                          Flexible(
-                                            child: Text(
-                                              cantidad,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                color: Colors.grey[600],
-                                              ),
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "S/. ${precio.toStringAsFixed(2)}", 
-                                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: turquesa)
-                                  ),
-                                  Text(
-                                    "Stock: $stock", 
-                                    style: const TextStyle(fontSize: 11, color: Colors.black87)
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
+                              // Nombre
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                child: Text(
+                                  nombre,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              // Botones
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.edit, color: Colors.teal.shade400),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ProductoDetalleScreen(docId: docId, data: data),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.delete_rounded, color: Colors.red.shade400),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) => ProductoDetalleScreen(docId: docId, data: data, soloEliminar: true),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     );
+
+
+
                   },
                 );
               },

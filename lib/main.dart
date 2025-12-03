@@ -19,7 +19,7 @@ class AdminApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Admin La Bodeguita',
+      title: 'La Bodeguita',
       theme: ThemeData(primarySwatch: Colors.teal),
       home: const LoginScreen(),
     );

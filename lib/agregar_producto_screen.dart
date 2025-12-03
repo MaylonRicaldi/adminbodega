@@ -15,7 +15,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   final precioController = TextEditingController();
   final marcaController = TextEditingController();
   final stockController = TextEditingController();
-  final cantidadController = TextEditingController(); // Campo Presentación (texto)
+  final cantidadController = TextEditingController();
   final imagenController = TextEditingController();
 
   bool disponibilidad = true;
@@ -36,23 +36,6 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     super.dispose();
   }
 
-  String _formatearEnlaceDrive(String? url) {
-    if (url == null || url.isEmpty) return "";
-    final regex1 = RegExp(r'/d/([^/]+)/');
-    final match1 = regex1.firstMatch(url);
-    if (match1 != null) {
-      final id = match1.group(1);
-      return "https://drive.google.com/uc?export=view&id=$id";
-    }
-    final regex2 = RegExp(r'id=([a-zA-Z0-9_-]+)');
-    final match2 = regex2.firstMatch(url);
-    if (match2 != null) {
-      final id = match2.group(1);
-      return "https://drive.google.com/uc?export=view&id=$id";
-    }
-    return url;
-  }
-
   Future<void> agregarProducto() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -71,7 +54,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             content: Text('El ID $idProducto ya existe. Usa otro ID.'),
             backgroundColor: Colors.red.shade400,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         );
         setState(() => isLoading = false);
@@ -80,7 +64,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
 
       final precio = double.tryParse(precioController.text.trim()) ?? 0.0;
       final stock = int.tryParse(stockController.text.trim()) ?? 0;
-      final cantidad = cantidadController.text.trim(); // Guardando como TEXTO
+      final cantidad = cantidadController.text.trim();
       bool disponible = stock > 0 ? disponibilidad : false;
 
       final imagenFormateada = imagenPreview ?? imagenController.text.trim();
@@ -93,7 +77,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         'Precio': precio,
         'Marca': marcaController.text.trim(),
         'Stock': stock,
-        'Cantidad': cantidad, // Guardando presentación como texto
+        'Cantidad': cantidad,
         'imagen': imagenFormateada,
         'Disponibilidad': disponible,
         'fechaCreacion': FieldValue.serverTimestamp(),
@@ -106,7 +90,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           content: const Text('¡Producto agregado exitosamente!'),
           backgroundColor: Colors.green.shade600,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
 
@@ -129,7 +114,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           content: Text('Error al agregar producto: ${e.toString()}'),
           backgroundColor: Colors.red.shade400,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } finally {
@@ -149,7 +135,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           content: const Text('ID ya existe'),
           backgroundColor: Colors.red.shade400,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     } else {
@@ -158,7 +145,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           content: const Text('ID disponible'),
           backgroundColor: Colors.green.shade600,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -166,17 +154,36 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
 
   Future<void> adaptarImagen() async {
     final urlOriginal = imagenController.text.trim();
-    if (urlOriginal.isEmpty) return;
+    if (urlOriginal.isEmpty) {
+      setState(() {
+        imagenAdaptada = false;
+        imagenPreview = null;
+      });
+      return;
+    }
 
-    final url = _formatearEnlaceDrive(urlOriginal);
+    // Validamos que sea un enlace de Cloudinary (opcional)
+    if (!urlOriginal.contains("cloudinary.com")) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Por favor ingresa un enlace de Cloudinary válido"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      setState(() {
+        imagenAdaptada = false;
+        imagenPreview = null;
+      });
+      return;
+    }
 
-    final image = NetworkImage(url);
+    final image = NetworkImage(urlOriginal);
     image.resolve(const ImageConfiguration()).addListener(
       ImageStreamListener(
         (info, _) {
           setState(() {
             imagenAdaptada = true;
-            imagenPreview = url;
+            imagenPreview = urlOriginal;
           });
         },
         onError: (_, __) {
@@ -184,6 +191,12 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             imagenAdaptada = false;
             imagenPreview = null;
           });
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("No se pudo cargar la imagen"),
+              backgroundColor: Colors.red,
+            ),
+          );
         },
       ),
     );
@@ -194,14 +207,20 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: turquesa,
-        title: const Text(
-          'Agregar Nuevo Producto',
-          style: TextStyle(
-              fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: Center(
+          child: const Text(
+            'Agregar Nuevo Producto',
+            style: TextStyle(
+              fontSize: 20, 
+              fontWeight: FontWeight.bold, 
+              color: Colors.white
+            ),
+          ),
+        ),
       ),
+
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -385,7 +404,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                                 controller: imagenController,
                                 decoration: InputDecoration(
                                   labelText: 'URL de Imagen (opcional)',
-                                  hintText: 'https://drive.google.com/file/...',
+                                  hintText:
+                                      'https://res.cloudinary.com/.../imagen.jpg',
                                   prefixIcon:
                                       Icon(Icons.image_outlined, color: turquesa),
                                   border: OutlineInputBorder(
@@ -423,8 +443,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                               child: Image.network(
                                 imagenPreview!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.broken_image, color: Colors.grey),
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.broken_image, color: Colors.grey),
                               ),
                             ),
                           ),
